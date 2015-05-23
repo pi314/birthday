@@ -201,8 +201,16 @@ def _insert_new_record(conn, new_record):
 
 
 def add_operation(args):
-    if not any((args.year, args.month, args.day)):
-        args.parser.error('At least one of { year | month | day } needed.')
+    if not any((args.year, args.month, args.day)) and args.date == '':
+        args.parser.error('At least one of { year | month | day | date } needed.')
+
+    if any((args.year, args.month, args.day)) and args.date != '':
+        args.parser.error('date argument cannot be used with any one of { year | month | day }.')
+
+    if args.date != '':
+        import re
+        if re.match(r'^\d\d?/\d\d?$', args.date):
+            args.month, args.day = args.date.split('/')
 
     input_record = BirthdayRecord(args.name, year=args.year, month=args.month, day=args.day)
 
@@ -335,6 +343,27 @@ def delete_operation(args):
     print('Record {name} had been removed.'.format(name=args.name))
 
 
+@_captcha
+def _ask_user_to_rename(old_name, new_name):
+    print('Rename {old_name} to {new_name},'.format(old_name=old_name, new_name=new_name))
+
+
+def rename_operation(args):
+    conn = _check_db()
+    cur = conn.cursor()
+    cur.execute('SELECT name FROM {table_name} WHERE name=\'{name}\''.format(table_name=TABLE_NAME, name=args.old_name))
+    old_record = _find_existed_record(cur, args.old_name)
+    if old_record is None:
+        args.parser.error('Record {name} does not exist.'.format(name=args.old_name))
+
+    _ask_user_to_rename(args.old_name, args.new_name)
+
+    cur.execute('UPDATE {table_name} SET name=\'{new_name}\' WHERE name=\'{old_name}\';'.format(
+        table_name=TABLE_NAME, new_name=args.new_name, old_name=args.old_name))
+    conn.commit()
+    print('Record {old_name} had been renamed to {new_name}.'.format(old_name=args.old_name, new_name=args.new_name))
+
+
 def main():
     top_parser = argparse.ArgumentParser(description='''Manage birthdays of your friends''')
     subparsers = top_parser.add_subparsers(description='valid subcommands', dest='subparser_name')
@@ -344,6 +373,7 @@ def main():
     parser_add.add_argument('-m', '--month', type=int, default=0)
     parser_add.add_argument('-d', '--day', type=int, default=0)
     parser_add.add_argument('name', type=str)
+    parser_add.add_argument('date', type=str, default='')
     parser_add.set_defaults(func=add_operation)
     parser_add.set_defaults(parser=parser_add)
 
@@ -371,6 +401,12 @@ def main():
     parser_delete.add_argument('name', type=str)
     parser_delete.set_defaults(func=delete_operation)
     parser_delete.set_defaults(parser=parser_delete)
+
+    parser_rename = subparsers.add_parser('rename', help='rename records')
+    parser_rename.add_argument('old_name', type=str)
+    parser_rename.add_argument('new_name', type=str)
+    parser_rename.set_defaults(func=rename_operation)
+    parser_rename.set_defaults(parser=parser_rename)
 
     try:
         args = top_parser.parse_args()
