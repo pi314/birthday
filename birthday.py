@@ -20,7 +20,10 @@ class BirthdayRecord:
         self.ignore = ignore
 
     def __str__(self):
-        return '[{year}/{month}/{day} {name}]'.format(
+        return '[' + self.print() + ']'
+
+    def print(self):
+        return '{year}/{month}/{day} {name}'.format(
                 year=self.q4(self.year),
                 month=self.q2(self.month),
                 day=self.q2(self.day),
@@ -185,6 +188,7 @@ def _insert_new_record(conn, new_record):
 def add_operation(args):
     if not any((args.year, args.month, args.day)):
         args.parser.error('At least one of { year | month | day } needed.')
+
     input_record = BirthdayRecord(args.name, year=args.year, month=args.month, day=args.day)
 
     conn = _check_db()
@@ -210,7 +214,55 @@ def add_operation(args):
 
 
 def show_operation(args):
-    print('show', args)
+    if args.upcoming_days and any((args.year, args.month, args.day)):
+        args.parser.error('upcoming-days cannot be used with any one of { year | month | day }.')
+
+    conn = _check_db()
+    cur = conn.cursor()
+    if args.upcoming_days == 0:
+        condition_list = []
+        if args.year != 0:
+            condition_list.append('year={}'.format(args.year))
+
+        if args.month != 0:
+            condition_list.append('month={}'.format(args.month))
+
+        if args.day != 0:
+            condition_list.append('day={}'.format(args.day))
+
+        if args.name != '':
+            condition_list.append('name LIKE \'%{}%\''.format(args.name).replace('%%%', '%').replace('%%', '%'))
+
+        if args.all == 0:
+            condition_list.append('ignore=0')
+
+        condition_str = ''
+        if len(condition_list) > 0:
+            condition_str = 'WHERE {}'.format(' AND '.join(condition_list))
+
+        cur.execute('SELECT * FROM Birthdays {cond};'.format(cond=condition_str))
+        for row in cur:
+            year = row[1]
+            month = row[2]
+            day = row[3]
+            name = row[4]
+            print(BirthdayRecord(name, year=year, month=month, day=day).print())
+
+    else:   # upcoming_days != 0
+        cur.execute('SELECT * FROM Birthdays WHERE month!=0 AND day!=0 ORDER BY year,month,day')
+        import datetime
+        base_date = datetime.date.today()
+        for row in cur:
+            year = row[1]
+            month = row[2]
+            day = row[3]
+            name = row[4]
+            row_date = datetime.date(base_date.year, month, day)
+            delta_days = (row_date - base_date).days % 365
+            if 0 <= delta_days and delta_days <= args.upcoming_days:
+                print('{record}: {days} days'.format(
+                    record=BirthdayRecord(name, year=year, month=month, day=day).print(),
+                    days=delta_days))
 
 
 def main():
@@ -226,12 +278,12 @@ def main():
     parser_add.set_defaults(parser=parser_add)
 
     parser_show = subparsers.add_parser('show', help='show records')
-    parser_show.add_argument('-y', '--year', type=int)
-    parser_show.add_argument('-m', '--month', type=int)
-    parser_show.add_argument('-d', '--day', type=int)
-    parser_show.add_argument('-n', '--name', type=str)
+    parser_show.add_argument('-y', '--year', type=int, default=0)
+    parser_show.add_argument('-m', '--month', type=int, default=0)
+    parser_show.add_argument('-d', '--day', type=int, default=0)
+    parser_show.add_argument('-n', '--name', type=str, default='')
     parser_show.add_argument('-a', '--all', action='store_true')
-    parser_show.add_argument('-u', '--upcoming-days', type=int)
+    parser_show.add_argument('-u', '--upcoming-days', type=int, default=0)
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
 
