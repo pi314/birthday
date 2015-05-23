@@ -150,7 +150,7 @@ def _check_db():
 
 def _find_existed_record(cur, name):
     # single quote needed here, double quote means **identifier** in sqlite
-    cur.execute("SELECT id,year,month,day,name FROM {table_name} WHERE name='{name}';".format(
+    cur.execute("SELECT id,year,month,day,name,ignore FROM {table_name} WHERE name='{name}';".format(
         table_name=TABLE_NAME, name=name))
     old_record = cur.fetchone()
     if old_record is None:
@@ -160,7 +160,8 @@ def _find_existed_record(cur, name):
     month = old_record[2]
     day = old_record[3]
     name = old_record[4]
-    return BirthdayRecord(name, year=year, month=month, day=day)
+    ignore = old_record[5]
+    return BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore)
 
 
 def _gen_captcha():
@@ -169,19 +170,27 @@ def _gen_captcha():
     return ''.join(random.sample(string.ascii_lowercase + string.digits, CAPTCHA_LENGTH))
 
 
-def _ask_user_to_replace(old_record, new_record):
-    while True:
-        captcha = _gen_captcha()
-        print('Update record: {old_record} -> {new_record}'.format(
-            old_record=old_record.diff(new_record),
-            new_record=new_record.diff(old_record),
-            file=sys.stderr))
-        print('Input captcha to confirm, or Ctrl-C to cancel [{}]:'.format(captcha), end=' ')
-        if input().strip() == captcha:
-            return True
+def _captcha(func):
+    def wrapped_func(*args):
+        while True:
+            captcha = _gen_captcha()
+            func(*args)
+            print('Input captcha to confirm, or Ctrl-C to cancel [{}]:'.format(captcha), end=' ')
+            if input().strip() == captcha:
+                return True
 
-        print('Captcha incorrect.')
-        print()
+            print('Captcha incorrect.')
+            print()
+
+    return wrapped_func
+
+
+@_captcha
+def _ask_user_to_replace(old_record, new_record):
+    print('Update record: {old_record} -> {new_record}'.format(
+        old_record=old_record.diff(new_record),
+        new_record=new_record.diff(old_record),
+        file=sys.stderr))
 
 
 def _insert_new_record(conn, new_record):
@@ -275,13 +284,23 @@ def show_operation(args):
                     days=delta_days))
 
 
+@_captcha
+def _ask_user_to_ignore(name, ignore):
+    print('{verb} {name}'.format(verb=['Follow', 'Ignore'][ignore], name=name))
+
+
 def _ignore_user(args, ignore):
     conn = _check_db()
     cur = conn.cursor()
-    cur.execute('SELECT name FROM {table_name} WHERE name=\'{name}\''.format(table_name=TABLE_NAME, name=args.name))
+    cur.execute('SELECT name,ignore FROM {table_name} WHERE name=\'{name}\''.format(table_name=TABLE_NAME, name=args.name))
     old_record = _find_existed_record(cur, args.name)
     if old_record is None:
         args.parser.error('Record {name} does not exist.'.format(name=args.name))
+
+    if old_record.ignore == ignore:
+        args.parser.error('Record {name} already {verb}'.format(name=args.name, verb=['followed', 'ignored'][ignore]))
+
+    _ask_user_to_ignore(args.name, ignore)
 
     cur.execute('UPDATE {table_name} SET ignore={ignore} WHERE name=\'{name}\';'.format(
         table_name=TABLE_NAME, name=args.name, ignore=ignore))
