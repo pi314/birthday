@@ -305,6 +305,7 @@ def _ignore_user(args, ignore):
     cur.execute('UPDATE {table_name} SET ignore={ignore} WHERE name=\'{name}\';'.format(
         table_name=TABLE_NAME, name=args.name, ignore=ignore))
     conn.commit()
+    print('Record {name} is now {verb}'.format(name=args.name, verb=['followed', 'ignored'][ignore]))
 
 
 def ignore_operation(args):
@@ -313,6 +314,27 @@ def ignore_operation(args):
 
 def follow_operation(args):
     _ignore_user(args, 0)
+
+
+@_captcha
+def _ask_user_to_delete(name):
+    print('Delete {name}'.format(name=name))
+
+
+def delete_operation(args):
+    conn = _check_db()
+    cur = conn.cursor()
+    cur.execute('SELECT name FROM {table_name} WHERE name=\'{name}\''.format(table_name=TABLE_NAME, name=args.name))
+    old_record = _find_existed_record(cur, args.name)
+    if old_record is None:
+        args.parser.error('Record {name} does not exist.'.format(name=args.name))
+
+    _ask_user_to_delete(args.name)
+
+    cur.execute('DELETE FROM {table_name} WHERE name=\'{name}\';'.format(
+        table_name=TABLE_NAME, name=args.name))
+    conn.commit()
+    print('Record {name} had been removed.'.format(name=args.name))
 
 
 def main():
@@ -346,6 +368,11 @@ def main():
     parser_follow.add_argument('name', type=str)
     parser_follow.set_defaults(func=follow_operation)
     parser_follow.set_defaults(parser=parser_follow)
+
+    parser_delete = subparsers.add_parser('delete', help='delete records')
+    parser_delete.add_argument('name', type=str)
+    parser_delete.set_defaults(func=delete_operation)
+    parser_delete.set_defaults(parser=parser_delete)
 
     try:
         args = top_parser.parse_args()
