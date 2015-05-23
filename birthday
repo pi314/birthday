@@ -195,7 +195,7 @@ def _insert_new_record(conn, new_record):
     cur = conn.cursor()
     cur.execute(new_record.insert_sql)
     conn.commit()
-    print('Record {new_record} has been added into database {database_file},'.format(
+    print('Record {new_record} has been added into database {database_file}.'.format(
         new_record=new_record,
         database_file=DATABASE_FILE_PATH,))
 
