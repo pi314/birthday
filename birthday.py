@@ -8,6 +8,7 @@ HOME_DIR = expanduser("~")
 DATABASE_FILE_NAME = '.birthday.sqlite'
 DATABASE_FILE_PATH = '{}/{}'.format(HOME_DIR, DATABASE_FILE_NAME)
 TABLE_NAME = 'Birthdays'
+CAPTCHA_LENGTH = 3
 
 
 class BirthdayRecord:
@@ -19,13 +20,14 @@ class BirthdayRecord:
         self.ignore = ignore
 
     def __str__(self):
-        return '[{}/{}/{} {}]'.format(
-                self.q4(self.year),
-                self.q2(self.month),
-                self.q2(self.day),
-                self.name
+        return '[{year}/{month}/{day} {name}]'.format(
+                year=self.q4(self.year),
+                month=self.q2(self.month),
+                day=self.q2(self.day),
+                name=self.name
             )
 
+    # question marks
     def q(self, value, width):
         if value == 0:
             return '?' * width
@@ -37,6 +39,20 @@ class BirthdayRecord:
 
     def q2(self, value):
         return self.q(value, 2)
+
+    # colored question marks
+    def cq4(self, value1, value2):
+        qs = self.q4(value1)
+        if value1 == value2:
+            return qs
+        return '\033[1;33m{}\033[m'.format(qs)
+
+    # colored question marks
+    def cq2(self, value1, value2):
+        qs = self.q2(value1)
+        if value1 == value2:
+            return qs
+        return '\033[1;33m{}\033[m'.format(qs)
 
     def copy(self):
         return BirthdayRecord(self.name, year=self.year, month=self.month, day=self.day, ignore=self.ignore)
@@ -83,6 +99,17 @@ class BirthdayRecord:
                self.month == another_record.month and \
                self.day == another_record.day
 
+    def diff(self, another_record):
+        if not isinstance(another_record, BirthdayRecord):
+            return str(self)
+
+        return '[{year}/{month}/{day} {name}]'.format(
+                year=self.cq4(self.year, another_record.year),
+                month=self.cq2(self.month, another_record.month),
+                day=self.cq2(self.day, another_record.day),
+                name=self.name
+            )
+
 
 def _check_db():
     try:
@@ -125,16 +152,25 @@ def _find_existed_record(cur, name):
     return BirthdayRecord(name, year=year, month=month, day=day)
 
 
-def _ask_user_to_replace(old_record, new_record):
-    choice = None
-    while not isinstance(choice, bool):
-        print('{old_record} exists in database, replace with {new_record}? [Y/n]'.format(
-            old_record=old_record,
-            new_record=new_record,
-            file=sys.stderr), end=' ')
-        choice = {'': True, 'y': True, 'yes': True, 'n': False, 'no': False}.get(input().strip().lower(), None)
+def _gen_captcha():
+    import random
+    import string
+    return ''.join(random.sample(string.ascii_lowercase + string.digits, CAPTCHA_LENGTH))
 
-    return choice
+
+def _ask_user_to_replace(old_record, new_record):
+    while True:
+        captcha = _gen_captcha()
+        print('Update record: {old_record} -> {new_record}'.format(
+            old_record=old_record.diff(new_record),
+            new_record=new_record.diff(old_record),
+            file=sys.stderr))
+        print('Input captcha to confirm, or Ctrl-C to cancel [{}]:'.format(captcha), end=' ')
+        if input().strip() == captcha:
+            return True
+
+        print('Captcha incorrect.')
+        print()
 
 
 def _insert_new_record(conn, new_record):
@@ -160,13 +196,14 @@ def add_operation(args):
         new_record.update(input_record)
         if new_record == old_record:
             print('{old_record} not changed'.format(old_record=old_record))
+            return
 
-        elif _ask_user_to_replace(old_record, new_record) == True:
-            cur.execute(new_record.update_sql)
-            conn.commit()
-            print('{new_record} updated into database {database_file}'.format(
-                new_record=new_record,
-                database_file=DATABASE_FILE_PATH,))
+        _ask_user_to_replace(old_record, new_record)
+        cur.execute(new_record.update_sql)
+        conn.commit()
+        print('{new_record} updated into database {database_file}'.format(
+            new_record=new_record,
+            database_file=DATABASE_FILE_PATH,))
 
     else:
         _insert_new_record(conn=conn, new_record=input_record)
@@ -198,12 +235,15 @@ def main():
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
 
-    args = top_parser.parse_args()
-    if not hasattr(args, 'func'):
-        top_parser.print_help()
-        exit(1)
+    try:
+        args = top_parser.parse_args()
+        if not hasattr(args, 'func'):
+            top_parser.print_help()
+            exit(1)
 
-    args.func(args)
+        args.func(args)
+    except KeyboardInterrupt:
+        exit(1)
 
 
 if __name__ == '__main__':
