@@ -23,11 +23,19 @@ class BirthdayRecord:
         return '[' + self.print() + ']'
 
     def print(self):
-        return '{year}/{month}/{day} {name}'.format(
+        ignore_color = ''
+        end_color = ''
+        if self.ignore:
+            ignore_color = '\033[1;30m'
+            end_color = '\033[m'
+
+        return '{start_color}{year}/{month}/{day} {name}{end_color}'.format(
                 year=self.q4(self.year),
                 month=self.q2(self.month),
                 day=self.q2(self.day),
-                name=self.name
+                name=self.name,
+                start_color=ignore_color,
+                end_color=end_color,
             )
 
     # question marks
@@ -246,7 +254,8 @@ def show_operation(args):
             month = row[2]
             day = row[3]
             name = row[4]
-            print(BirthdayRecord(name, year=year, month=month, day=day).print())
+            ignore = row[5]
+            print(BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore).print())
 
     else:   # upcoming_days != 0
         cur.execute('SELECT * FROM Birthdays WHERE month!=0 AND day!=0 ORDER BY year,month,day')
@@ -257,19 +266,41 @@ def show_operation(args):
             month = row[2]
             day = row[3]
             name = row[4]
+            ignore = row[5]
             row_date = datetime.date(base_date.year, month, day)
             delta_days = (row_date - base_date).days % 365
             if 0 <= delta_days and delta_days <= args.upcoming_days:
                 print('{record}: {days} days'.format(
-                    record=BirthdayRecord(name, year=year, month=month, day=day).print(),
+                    record=BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore).print(),
                     days=delta_days))
+
+
+def _ignore_user(args, ignore):
+    conn = _check_db()
+    cur = conn.cursor()
+    cur.execute('SELECT name FROM {table_name} WHERE name=\'{name}\''.format(table_name=TABLE_NAME, name=args.name))
+    old_record = _find_existed_record(cur, args.name)
+    if old_record is None:
+        args.parser.error('Record {name} does not exist.'.format(name=args.name))
+
+    cur.execute('UPDATE {table_name} SET ignore={ignore} WHERE name=\'{name}\';'.format(
+        table_name=TABLE_NAME, name=args.name, ignore=ignore))
+    conn.commit()
+
+
+def ignore_operation(args):
+    _ignore_user(args, 1)
+
+
+def follow_operation(args):
+    _ignore_user(args, 0)
 
 
 def main():
     top_parser = argparse.ArgumentParser(description='''Manage birthday date of your friends''')
     subparsers = top_parser.add_subparsers(description='valid subcommands', dest='subparser_name')
 
-    parser_add = subparsers.add_parser('add', help='add records')
+    parser_add = subparsers.add_parser('add', help='add records', aliases=['update'])
     parser_add.add_argument('-y', '--year', type=int, default=0)
     parser_add.add_argument('-m', '--month', type=int, default=0)
     parser_add.add_argument('-d', '--day', type=int, default=0)
@@ -286,6 +317,16 @@ def main():
     parser_show.add_argument('-u', '--upcoming-days', type=int, default=0)
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
+
+    parser_ignore = subparsers.add_parser('ignore', help='hide records')
+    parser_ignore.add_argument('name', type=str)
+    parser_ignore.set_defaults(func=ignore_operation)
+    parser_ignore.set_defaults(parser=parser_ignore)
+
+    parser_follow = subparsers.add_parser('follow', help='unhide records')
+    parser_follow.add_argument('name', type=str)
+    parser_follow.set_defaults(func=follow_operation)
+    parser_follow.set_defaults(parser=parser_follow)
 
     try:
         args = top_parser.parse_args()
