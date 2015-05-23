@@ -142,8 +142,7 @@ def _check_db():
         return conn
 
     except sqlite3.DatabaseError as e:
-        print('{} is corrupted, please remove it and try again.'.format(DATABASE_FILE_PATH),
-            file=sys.stderr)
+        print('{} is corrupted, please remove it and try again.'.format(DATABASE_FILE_PATH))
         conn.close()
         exit(1)
 
@@ -187,17 +186,16 @@ def _captcha(func):
 
 @_captcha
 def _ask_user_to_replace(old_record, new_record):
-    print('Update record: {old_record} -> {new_record}'.format(
+    print('Update record: {old_record} -> {new_record},'.format(
         old_record=old_record.diff(new_record),
-        new_record=new_record.diff(old_record),
-        file=sys.stderr))
+        new_record=new_record.diff(old_record),))
 
 
 def _insert_new_record(conn, new_record):
     cur = conn.cursor()
     cur.execute(new_record.insert_sql)
     conn.commit()
-    print('{new_record} added into database {database_file}'.format(
+    print('Record {new_record} has been added into database {database_file},'.format(
         new_record=new_record,
         database_file=DATABASE_FILE_PATH,))
 
@@ -216,13 +214,13 @@ def add_operation(args):
         new_record = old_record.copy()
         new_record.update(input_record)
         if new_record == old_record:
-            print('{old_record} not changed'.format(old_record=old_record))
+            print('Record {old_record} not changed.'.format(old_record=old_record))
             return
 
         _ask_user_to_replace(old_record, new_record)
         cur.execute(new_record.update_sql)
         conn.commit()
-        print('{new_record} updated into database {database_file}'.format(
+        print('Record {new_record} has been updated into database {database_file}.'.format(
             new_record=new_record,
             database_file=DATABASE_FILE_PATH,))
 
@@ -286,7 +284,7 @@ def show_operation(args):
 
 @_captcha
 def _ask_user_to_ignore(name, ignore):
-    print('{verb} {name}'.format(verb=['Follow', 'Ignore'][ignore], name=name))
+    print('{verb} {name},'.format(verb=['Follow', 'Ignore'][ignore], name=name))
 
 
 def _ignore_user(args, ignore):
@@ -305,7 +303,7 @@ def _ignore_user(args, ignore):
     cur.execute('UPDATE {table_name} SET ignore={ignore} WHERE name=\'{name}\';'.format(
         table_name=TABLE_NAME, name=args.name, ignore=ignore))
     conn.commit()
-    print('Record {name} is now {verb}'.format(name=args.name, verb=['followed', 'ignored'][ignore]))
+    print('Record {name} is now {verb}.'.format(name=args.name, verb=['followed', 'ignored'][ignore]))
 
 
 def ignore_operation(args):
@@ -318,7 +316,7 @@ def follow_operation(args):
 
 @_captcha
 def _ask_user_to_delete(name):
-    print('Delete {name}'.format(name=name))
+    print('Delete {name},'.format(name=name))
 
 
 def delete_operation(args):
@@ -338,7 +336,7 @@ def delete_operation(args):
 
 
 def main():
-    top_parser = argparse.ArgumentParser(description='''Manage birthday date of your friends''')
+    top_parser = argparse.ArgumentParser(description='''Manage birthdays of your friends''')
     subparsers = top_parser.add_subparsers(description='valid subcommands', dest='subparser_name')
 
     parser_add = subparsers.add_parser('add', help='add records', aliases=['update'])
