@@ -367,8 +367,12 @@ def rename_operation(args):
 
 
 def main():
-    top_parser = argparse.ArgumentParser(description='''Manage birthdays of your friends''')
-    subparsers = top_parser.add_subparsers(description='valid subcommands', dest='subparser_name')
+    top_parser = argparse.ArgumentParser(
+        description='Manage birthdays of your friends.',
+        usage='birthday [-h] command ...')
+    subparsers = top_parser.add_subparsers(
+        title='Available commands',
+        metavar=' '*40)
 
     parser_add = subparsers.add_parser('add', help='add records', aliases=['update'])
     parser_add.add_argument('name', type=str)
