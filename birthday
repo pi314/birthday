@@ -41,7 +41,7 @@ class BirthdayRecord:
     # question marks
     def q(self, value, width):
         if value == 0:
-            return '?' * width
+            return '-' * width
 
         return '{:0>2}'.format(value)
 
