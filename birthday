@@ -13,9 +13,9 @@ CAPTCHA_LENGTH = 3
 
 class BirthdayRecord:
     def __init__(self, name, year=0, month=0, day=0, ignore=0):
-        self.year = year
-        self.month = month
-        self.day = day
+        self.year = int(year)
+        self.month = int(month)
+        self.day = int(day)
         self.name = name
         self.ignore = ignore
 
@@ -201,18 +201,20 @@ def _insert_new_record(conn, new_record):
 
 
 def add_operation(args):
-    if not any((args.year, args.month, args.day)) and args.date == '':
-        args.parser.error('At least one of { year | month | day | date } needed.')
+    import re
+    m = re.match(r'^(?:(\d{4}|xxxx)/)?(\d\d|xx)/(\d\d|xx)$', args.date)
+    if m:
+        month_day_str = m.group
+        input_year = 0 if m.group(1) in (None, 'xxxx') else int(m.group(1))
+        input_month = 0 if m.group(2) == 'xx' else int(m.group(2))
+        input_day = 0 if m.group(3) == 'xx' else int(m.group(3))
+    else:
+        args.parser.error('Date should be in format 1991/11/02, 11/02, xxxx/11/02 or 1991/11/xx.')
 
-    if any((args.year, args.month, args.day)) and args.date != '':
-        args.parser.error('date argument cannot be used with any one of { year | month | day }.')
+    if (input_year, input_month, input_day) == (0, 0, 0):
+        args.parser.error('At least one of { year | month | day } needed.')
 
-    if args.date != '':
-        import re
-        if re.match(r'^\d\d?/\d\d?$', args.date):
-            args.month, args.day = args.date.split('/')
-
-    input_record = BirthdayRecord(args.name, year=args.year, month=args.month, day=args.day)
+    input_record = BirthdayRecord(args.name, year=input_year, month=input_month, day=input_day)
 
     conn = _check_db()
     cur = conn.cursor()
@@ -369,11 +371,8 @@ def main():
     subparsers = top_parser.add_subparsers(description='valid subcommands', dest='subparser_name')
 
     parser_add = subparsers.add_parser('add', help='add records', aliases=['update'])
-    parser_add.add_argument('-y', '--year', type=int, default=0)
-    parser_add.add_argument('-m', '--month', type=int, default=0)
-    parser_add.add_argument('-d', '--day', type=int, default=0)
     parser_add.add_argument('name', type=str)
-    parser_add.add_argument('date', type=str, default='')
+    parser_add.add_argument('date', type=str)
     parser_add.set_defaults(func=add_operation)
     parser_add.set_defaults(parser=parser_add)
 
