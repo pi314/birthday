@@ -45,3 +45,5 @@ Examples: ::
   $ birthday show
   1991/11/02 Dear-friend
 
+All records are stored into ``~/.birthday.sqlite``.
+
