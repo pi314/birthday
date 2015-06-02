@@ -200,6 +200,17 @@ def _insert_new_record(conn, new_record):
         database_file=DATABASE_FILE_PATH,))
 
 
+def help_operation(args):
+    if args.subcommand is None:
+        args.top_parser.print_help()
+        args.top_parser.exit()
+
+    if args.subcommand not in args.subparser_list:
+        args.top_parser.error('subcommand {} is not available.'.format(args.subcommand))
+
+    args.subparser_list[args.subcommand].print_help()
+    args.subparser_list[args.subcommand].exit()
+
 def add_operation(args):
     import re
     m = re.match(r'^(?:(\d{4}|xxxx)/)?(\d\d|xx)/(\d\d|xx)$', args.date)
@@ -369,18 +380,31 @@ def rename_operation(args):
 def main():
     top_parser = argparse.ArgumentParser(
         description='Manage birthdays of your friends.',
-        usage='birthday [-h] command ...')
+        add_help=False)
     subparsers = top_parser.add_subparsers(
-        title='Available commands',
+        title='Available subcommands',
         metavar=' '*40)
 
-    parser_add = subparsers.add_parser('add', help='add records', aliases=['update'])
-    parser_add.add_argument('name', type=str)
-    parser_add.add_argument('date', type=str)
+    parser_help = subparsers.add_parser(
+        'help',
+        help='help page for subcommands',
+        add_help=False)
+    parser_help.add_argument('subcommand', type=str, nargs='?')
+    parser_help.set_defaults(func=help_operation)
+
+    parser_add = subparsers.add_parser('add',
+        help='add records',
+        description='Add/Update new records into database.',
+        aliases=['update'], add_help=False)
+    parser_add.add_argument('name', type=str, help='the name of your friend')
+    parser_add.add_argument('date', type=str, help='birthday of your friend, in xxxx/xx/xx format')
     parser_add.set_defaults(func=add_operation)
     parser_add.set_defaults(parser=parser_add)
 
-    parser_show = subparsers.add_parser('show', help='show records')
+    parser_show = subparsers.add_parser('show',
+        help='show records',
+        description='Show records with filtering constrains.',
+        add_help=False)
     parser_show.add_argument('-y', '--year', type=int, default=0)
     parser_show.add_argument('-m', '--month', type=int, default=0)
     parser_show.add_argument('-d', '--day', type=int, default=0)
@@ -390,26 +414,50 @@ def main():
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
 
-    parser_ignore = subparsers.add_parser('ignore', help='hide records')
-    parser_ignore.add_argument('name', type=str)
+    parser_ignore = subparsers.add_parser('ignore',
+        help='hide records',
+        description='Hide records, without deleting them.',
+        add_help=False)
+    parser_ignore.add_argument('name', type=str, help='the name of your friend')
     parser_ignore.set_defaults(func=ignore_operation)
     parser_ignore.set_defaults(parser=parser_ignore)
 
-    parser_follow = subparsers.add_parser('follow', help='unhide records')
-    parser_follow.add_argument('name', type=str)
+    parser_follow = subparsers.add_parser('follow',
+        help='unhide records',
+        description='Unhide records, you are friends again.',
+        add_help=False)
+    parser_follow.add_argument('name', type=str, help='the name of your friend')
     parser_follow.set_defaults(func=follow_operation)
     parser_follow.set_defaults(parser=parser_follow)
 
-    parser_delete = subparsers.add_parser('delete', help='delete records')
-    parser_delete.add_argument('name', type=str)
+    parser_delete = subparsers.add_parser('delete',
+        help='delete records',
+        description='Delete records from database, goodbye.',
+        add_help=False)
+    parser_delete.add_argument('name', type=str, help='the name of your friend')
     parser_delete.set_defaults(func=delete_operation)
     parser_delete.set_defaults(parser=parser_delete)
 
-    parser_rename = subparsers.add_parser('rename', help='rename records')
-    parser_rename.add_argument('old_name', type=str)
-    parser_rename.add_argument('new_name', type=str)
+    parser_rename = subparsers.add_parser('rename',
+        help='rename records',
+        description='Rename your friend.',
+        add_help=False)
+    parser_rename.add_argument('old_name', type=str, help='the old name of your friend')
+    parser_rename.add_argument('new_name', type=str, help='the new name of your friend')
     parser_rename.set_defaults(func=rename_operation)
     parser_rename.set_defaults(parser=parser_rename)
+
+    parser_help.set_defaults(top_parser=top_parser)
+    parser_help.set_defaults(subparser_list={
+        'help': parser_help,
+        'show': parser_show,
+        'add': parser_add,
+        'update': parser_add,
+        'ignore': parser_ignore,
+        'follow': parser_follow,
+        'delete': parser_delete,
+        'rename': parser_rename,
+        })
 
     try:
         args = top_parser.parse_args()
