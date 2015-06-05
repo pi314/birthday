@@ -81,14 +81,19 @@ class BirthdayRecord:
         if another_record.day != 0:
             self.day = another_record.day
 
-    @property
-    def update_sql(self):
-        return 'UPDATE {table_name} SET year={year}, month={month}, day={day} WHERE name=\'{name}\';'.format(
+    def write_to_db(self, conn):
+        cursor = conn.cursor()
+        sql = 'UPDATE {table_name} SET year={year}, month={month}, day={day} WHERE name=\'{name}\';'.format(
             year=self.year,
             month=self.month,
             day=self.day,
             name=self.name,
             table_name=TABLE_NAME,)
+        cursor.execute(sql)
+        conn.commit()
+
+    @property
+    def update_sql(self):
 
     @property
     def insert_sql(self):
@@ -155,11 +160,7 @@ def _find_existed_record(cur, name):
     if old_record is None:
         return None
 
-    year = old_record[1]
-    month = old_record[2]
-    day = old_record[3]
-    name = old_record[4]
-    ignore = old_record[5]
+    year, month, day, name, ignore = old_record[1:6]
     return BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore)
 
 
@@ -239,8 +240,7 @@ def add_operation(args):
             return
 
         _ask_user_to_replace(old_record, new_record)
-        cur.execute(new_record.update_sql)
-        conn.commit()
+        new_record.write_to_db(conn)
         print('Record {new_record} has been updated into database {database_file}.'.format(
             new_record=new_record,
             database_file=DATABASE_FILE_PATH,))
