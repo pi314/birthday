@@ -250,57 +250,94 @@ def add_operation(args):
 
 
 def show_operation(args):
-    if args.upcoming_days and any((args.year, args.month, args.day)):
-        args.parser.error('upcoming-days cannot be used with any one of { year | month | day }.')
+
+    def _parse_constrains(parser, constrains_list):
+        import re
+
+        constrains = {}
+        for c in constrains_list:
+            m = re.match(r'^(.*)=(.*)', c)
+            if m is not None:
+                key = m.group(1)
+                value = m.group(2)
+                if key not in ('year', 'age', 'month', 'day', 'name', 'next'):
+                    parser.error('Invalid constrain: {}'.format(key))
+
+                if key in constrains:
+                    parser.error('Duplicate constrain: {}'.format(key))
+
+                constrains[key] = value
+
+            else:
+                if c not in ('next', 'all'):
+                    parser.error('Invalid constrain: {}'.format(c))
+
+                constrains[c] = True
+
+        # check constrain logic
+        if 'year' in constrains and 'age' in constrains:
+            parser.error('"year" constrain should not be used with "age."')
+
+        return constrains
+
+    constrains = _parse_constrains(args.parser, args.constrains)
+
+    condition_list = []
+    if 'age' in constrains:
+        import datetime
+        base_date = datetime.date.today()
+        constrains['year'] = base_date.year - int(constrains['age'])
+        del constrains['age']
+
+    for i in ('year', 'month', 'day'):
+        if i in constrains:
+            condition_list.append('{}={}'.format(i, constrains[i]))
+
+    if 'all' not in constrains:
+        condition_list.append('ignore=0')
+
+    if 'name' in constrains:
+        condition_list.append('name LIKE \'%{}%\''.format(constrains['name']).replace('%%%', '%').replace('%%', '%'))
+
+    if 'next' not in constrains:
+        constrains['next'] = 400
+
+    condition_str = ''
+    if len(condition_list) > 0:
+        condition_str = 'WHERE {}'.format(' AND '.join(condition_list))
+
+    import datetime
+    base_date = datetime.date.today()
 
     conn = _check_db()
     cur = conn.cursor()
-    if args.upcoming_days == 0:
-        condition_list = []
-        if args.year != 0:
-            condition_list.append('year={}'.format(args.year))
+    cur.execute('SELECT * FROM Birthdays {cond} ORDER BY month, day, year, name, ignore;'.format(cond=condition_str))
 
-        if args.month != 0:
-            condition_list.append('month={}'.format(args.month))
-
-        if args.day != 0:
-            condition_list.append('day={}'.format(args.day))
-
-        if args.name != '':
-            condition_list.append('name LIKE \'%{}%\''.format(args.name).replace('%%%', '%').replace('%%', '%'))
-
-        if args.all == 0:
-            condition_list.append('ignore=0')
-
-        condition_str = ''
-        if len(condition_list) > 0:
-            condition_str = 'WHERE {}'.format(' AND '.join(condition_list))
-
-        cur.execute('SELECT * FROM Birthdays {cond};'.format(cond=condition_str))
+    if constrains['next'] == True:
+        first_record = None
         for row in cur:
-            year = row[1]
-            month = row[2]
-            day = row[3]
-            name = row[4]
-            ignore = row[5]
-            print(BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore).print())
-
-    else:   # upcoming_days != 0
-        cur.execute('SELECT * FROM Birthdays WHERE month!=0 AND day!=0 ORDER BY year,month,day')
-        import datetime
-        base_date = datetime.date.today()
-        for row in cur:
-            year = row[1]
-            month = row[2]
-            day = row[3]
-            name = row[4]
-            ignore = row[5]
+            year, month, day, name, ignore = row[1:6]
             row_date = datetime.date(base_date.year, month, day)
-            delta_days = (row_date - base_date).days % 365
-            if 0 <= delta_days and delta_days <= args.upcoming_days:
-                print('{record}: {days} days'.format(
-                    record=BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore).print(),
-                    days=delta_days))
+            delta_days = (row_date - base_date).days
+            record = BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore)
+            if first_record is None:
+                first_record = record
+
+            if delta_days >= 0:
+                print(record.print())
+                exit()
+
+        if first_record is not None:
+            print(record.print())
+            exit()
+
+    constrain_days = constrains['next']
+    for row in cur:
+        year, month, day, name, ignore = row[1:6]
+        row_date = datetime.date(base_date.year, month, day)
+        delta_days = (row_date - base_date).days % 365
+        if 0 <= delta_days and delta_days <= int(constrains['next']):
+            print(BirthdayRecord(name, year=year, month=month, day=day, ignore=ignore).print())
 
 
 @_captcha
@@ -405,12 +442,7 @@ def main():
         help='show records',
         description='Show records with filtering constrains.',
         add_help=False)
-    parser_show.add_argument('-y', '--year', type=int, default=0)
-    parser_show.add_argument('-m', '--month', type=int, default=0)
-    parser_show.add_argument('-d', '--day', type=int, default=0)
-    parser_show.add_argument('-n', '--name', type=str, default='')
-    parser_show.add_argument('-a', '--all', action='store_true')
-    parser_show.add_argument('-u', '--upcoming-days', type=int, default=0)
+    parser_show.add_argument('constrains', type=str, nargs='*')
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
 
