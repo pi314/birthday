@@ -17,6 +17,7 @@ Usage
 
 Available commands:
 
+* help
 * add (update)
 * show
 * ignore
@@ -43,6 +44,12 @@ Examples: ::
   # We forgive each other
   $ birthday follow Dear-friend
   $ birthday show
+  1991/11/02 Dear-friend
+
+  # (add many many friends)
+
+  # What's the birthday of Dear-friend?
+  $ birthday show name=friend year=1991 month=11
   1991/11/02 Dear-friend
 
 All records are stored into ``~/.birthday.sqlite``.
