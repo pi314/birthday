@@ -92,12 +92,9 @@ class BirthdayRecord:
         cursor.execute(sql)
         conn.commit()
 
-    @property
-    def update_sql(self):
-
-    @property
-    def insert_sql(self):
-        return '''INSERT INTO {table_name}
+    def insert_to_db(self, conn):
+        cursor = conn.cursor()
+        sql = '''INSERT INTO {table_name}
             (id, name, year, month, day)
             VALUES (NULL, "{name}", {year}, {month}, {day});'''.format(
                 year=self.year,
@@ -105,6 +102,8 @@ class BirthdayRecord:
                 day=self.day,
                 name=self.name,
                 table_name=TABLE_NAME,)
+        cursor.execute(sql)
+        conn.commit()
 
     def __eq__(self, another_record):
         if not isinstance(another_record, BirthdayRecord):
@@ -194,8 +193,7 @@ def _ask_user_to_replace(old_record, new_record):
 
 def _insert_new_record(conn, new_record):
     cur = conn.cursor()
-    cur.execute(new_record.insert_sql)
-    conn.commit()
+    new_record.insert_to_db(conn)
     print('Record {new_record} has been added into database {database_file}.'.format(
         new_record=new_record,
         database_file=DATABASE_FILE_PATH,))
@@ -288,6 +286,24 @@ def show_operation(args):
         base_date = datetime.date.today()
         constrains['year'] = base_date.year - int(constrains['age'])
         del constrains['age']
+
+    month_name_list = [
+        'January', 'February', 'March',
+        'April', 'May', 'June',
+        'July', 'August', 'September',
+        'October', 'November', 'December',
+        'Jan', 'Feb', 'Mar',
+        'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep',
+        'Oct', 'Nov', 'Dec',
+        ]
+    if 'month' in constrains:
+        if constrains['month'] in month_name_list:
+            index = month_name_list.index(constrains['month'])
+            constrains['month'] = (index % 12) + 1
+
+        elif not constrains['month'].isdigit():
+            args.parser.error('Invalid value for month: {}'.format(constrains['month']))
 
     for i in ('year', 'month', 'day'):
         if i in constrains:
