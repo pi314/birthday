@@ -254,7 +254,7 @@ def show_operation(args):
 
         constrains = {}
         for c in constrains_list:
-            m = re.match(r'^(.*)=(.*)', c)
+            m = re.match(r'^(.+)=(.+)', c)
             if m is not None:
                 key = m.group(1)
                 value = m.group(2)
@@ -278,7 +278,7 @@ def show_operation(args):
 
         return constrains
 
-    constrains = _parse_constrains(args.parser, args.constrains)
+    constrains = _parse_constrains(args.parser, args.constrain)
 
     condition_list = []
     if 'age' in constrains:
@@ -430,6 +430,60 @@ def rename_operation(args):
     print('Record {old_name} had been renamed to {new_name}.'.format(old_name=args.old_name, new_name=args.new_name))
 
 
+def examples_operation(args):
+    print('# show default help page')
+    print('$ birthday help')
+    print('')
+    print('# show subcommand help page')
+    print('$ birthday help help')
+    print('')
+    print('# add a record to database')
+    print('$ birthday add vim 1991/xx/xx')
+    print('')
+    print('# update a record in database')
+    print('$ birthday update vim xxxx/11/02')
+    print('')
+    print('# show all records in database except ignored')
+    print('$ birthday show')
+    print('')
+    print('# show records in 1991')
+    print('$ birthday show year=1991')
+    print('')
+    print('# show records which is 21 years old')
+    print('$ birthday show age=21')
+    print('')
+    print('# show records in November')
+    print('$ birthday show month=Nov')
+    print('$ birthday show month=11')
+    print('')
+    print('# show records in specific day')
+    print('$ birthday show month=11 day=2')
+    print('')
+    print('# show record contains keyword (case sensitive)')
+    print('$ birthday show name=i')
+    print('')
+    print('# show next record from today')
+    print('$ birthday show next')
+    print('')
+    print('# show records coming in 3 days')
+    print('$ birthday show next=3')
+    print('')
+    print('# show all records include ignored')
+    print('$ birthday show all')
+    print('')
+    print('# hide a record')
+    print('$ birthday ignore vim')
+    print('')
+    print('# unhide a record')
+    print('$ birthday follow vim')
+    print('')
+    print('# delete a record')
+    print('$ birthday delete vim')
+    print('')
+    print('# rename a record')
+    print('$ birthday rename vim VIM')
+
+
 def main():
     top_parser = argparse.ArgumentParser(
         description='Manage birthdays of your friends.',
@@ -458,7 +512,7 @@ def main():
         help='show records',
         description='Show records with filtering constrains.',
         add_help=False)
-    parser_show.add_argument('constrains', type=str, nargs='*')
+    parser_show.add_argument('constrain', type=str, nargs='*', help='available constrains: year, age, month, day, name, next, all')
     parser_show.set_defaults(func=show_operation)
     parser_show.set_defaults(parser=parser_show)
 
@@ -495,6 +549,12 @@ def main():
     parser_rename.set_defaults(func=rename_operation)
     parser_rename.set_defaults(parser=parser_rename)
 
+    parser_examples = subparsers.add_parser('examples',
+        help='example usages',
+        description='',
+        add_help=False)
+    parser_examples.set_defaults(func=examples_operation)
+
     parser_help.set_defaults(top_parser=top_parser)
     parser_help.set_defaults(subparser_list={
         'help': parser_help,
@@ -505,6 +565,7 @@ def main():
         'follow': parser_follow,
         'delete': parser_delete,
         'rename': parser_rename,
+        'examples': parser_examples,
         })
 
     try:
