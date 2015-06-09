@@ -24,6 +24,7 @@ Available commands:
 * follow
 * delete
 * rename
+* examples
 
 Examples: ::
 
@@ -51,6 +52,9 @@ Examples: ::
   # What's the birthday of Dear-friend?
   $ birthday show name=friend year=1991 month=11
   1991/11/02 Dear-friend
+
+  # how to use?
+  $ birthday examples
 
 All records are stored into ``~/.birthday.sqlite``.
 
