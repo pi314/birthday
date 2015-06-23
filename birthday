@@ -212,14 +212,25 @@ def help_operation(args):
 
 def add_operation(args):
     import re
-    m = re.match(r'^(?:(\d{4}|xxxx)/)?(\d\d|xx)/(\d\d|xx)$', args.date)
+    m = re.match(r'^(?:(\d{4}|xxxx)/)?(?:(\d\d|xx)/(\d\d|xx)|(today))$', args.date)
     if m:
-        month_day_str = m.group
         input_year = 0 if m.group(1) in (None, 'xxxx') else int(m.group(1))
-        input_month = 0 if m.group(2) == 'xx' else int(m.group(2))
-        input_day = 0 if m.group(3) == 'xx' else int(m.group(3))
+        if m.group(4) == 'today':
+            import datetime
+            today = datetime.date.today()
+            input_month = today.month
+            input_day = today.day
+
+        else:
+            input_month = 0 if m.group(2) == 'xx' else int(m.group(2))
+            input_day = 0 if m.group(3) == 'xx' else int(m.group(3))
+
     else:
-        args.parser.error('Date should be in format 1991/11/02, 11/02, xxxx/11/02 or 1991/11/xx.')
+        args.parser.error('Date should be in format:\n'
+            '    <date>:  <year>/<month>/<day> | <year>/today | today\n'
+            '    <year>:  xxxx | \d\d\d\d\n'
+            '    <month>: xx | \d\d\n'
+            '    <day>:   xx | \d\d')
 
     if (input_year, input_month, input_day) == (0, 0, 0):
         args.parser.error('At least one of { year | month | day } needed.')
@@ -439,6 +450,7 @@ def examples_operation(args):
     print('')
     print('# add a record to database')
     print('$ birthday add vim 1991/xx/xx')
+    print('$ birthday add friend today')
     print('')
     print('# update a record in database')
     print('$ birthday update vim xxxx/11/02')
