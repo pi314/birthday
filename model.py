@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 
 from utils import captcha
 
@@ -56,9 +57,60 @@ class Birthday:
 
     @classmethod
     @connection_required
-    def all(cls):
-        for record in cls.cursor.execute('SELECT * FROM {TABLE_NAME};'.format(TABLE_NAME=TABLE_NAME)):
-            yield Birthday(record[3], record[:3])
+    def select(cls, constrains={}):
+        today = datetime.date.today()
+
+        for record in cls.cursor.execute('SELECT * FROM {TABLE_NAME} ORDER BY month, day, year, name;'.format(TABLE_NAME=TABLE_NAME)):
+            record = Birthday(record[3], record[:3])
+            if 'year' in constrains and record.year != constrains['year']:
+                continue
+
+            if 'month' in constrains and record.month != constrains['month']:
+                continue
+
+            if 'day' in constrains and record.day != constrains['day']:
+                continue
+
+            if 'name' in constrains and constrains['name'] not in record.name:
+                continue
+
+            if 'age' in constrains:
+                if record.year == 0:
+                    continue
+
+                if today.year - record.year == constrains['age']:
+                    if today.month < record.month:
+                        continue
+
+                    elif today.month > record.month:
+                        yield record
+                        continue
+
+                    elif today.day < record.day:
+                        continue
+
+                    elif today.day >= record.day:
+                        yield record
+                        continue
+
+                elif today.year - record.year == constrains['age'] + 1:
+                    if today.month > record.month:
+                        continue
+
+                    elif today.month < record.month:
+                        yield record
+                        continue
+
+                    elif today.day >= record.day:
+                        continue
+
+                    elif today.day < record.day:
+                        yield record
+                        continue
+
+                continue
+
+            yield record
 
     def __init__(self, name, date):
         self.year = date[0]

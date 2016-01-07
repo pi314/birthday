@@ -5,11 +5,14 @@ from model import Birthday
 
 def command(args):
     Birthday.connect()
-    constrains = args.constrains
-    for r in Birthday.all():
-        print(r)
+    constrains = dict(args.constrains)
 
-    print('constrains:', constrains)
+    if 'age' in constrains and 'year' in constrains:
+        raise argparse.ArgumentError('Constrain error: "year" cannot be used with "age".')
+
+    for record in Birthday.select(constrains):
+        print(record)
+
     Birthday.disconnect()
 
 
