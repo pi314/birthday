@@ -5,32 +5,11 @@ import sys
 import os
 import re
 
-from birthday_show import birthday_show
+import show
+import add
 
 
 CAPTCHA_LENGTH = 3
-
-
-def constrain_str(s: str):
-    p = s.split('=')
-    if len(p) != 2:
-        raise argparse.ArgumentTypeError('Constrains should be in "key=value" format')
-
-    if p[0] in ('year', 'age', 'month', 'day', 'next'):
-        try:
-            p[1] = int(p[1])
-            if p[0] in ('age', 'month', 'day') and p[1] <= 0:
-                raise argparse.ArgumentTypeError('Constrain {} error: value should larger than zero'.format(p[0]))
-        except ValueError:
-            raise argparse.ArgumentTypeError('Constrain {} error: value should be an integer'.format(p[0]))
-
-    elif p[0] in ('name',):
-        pass
-
-    else:
-        raise argparse.ArgumentTypeError('Unknown constrain: {}'.format(p[0]))
-
-    return p
 
 
 def main():
@@ -41,14 +20,22 @@ def main():
         title='Available subcommands',
         metavar='subcommand')
 
+    # birthday show
     parser_show = subparsers.add_parser('show',
-        help='show records',
-        description='Show records with filtering constrains.',
+        help='Show records with filtering constrains.',
         add_help=False)
     parser_show.add_argument('constrains',
-        type=constrain_str,
+        type=show.constrain_str,
         nargs='*', help='available constrains: year, age, month, day, name, next')
-    parser_show.set_defaults(func=birthday_show)
+    parser_show.set_defaults(func=show.command)
+
+    # birthday add
+    parser_add = subparsers.add_parser('add',
+        help='Add new record with partial informations',
+        add_help=False)
+    parser_add.add_argument('name', type=str, help='the name of your friend')
+    parser_add.add_argument('date', type=add.date_str, help='birthday of your friend, in xxxx/xx/xx format')
+    parser_add.set_defaults(func=add.command)
 
     try:
         args = top_parser.parse_args()
