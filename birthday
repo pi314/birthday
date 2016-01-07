@@ -3,6 +3,8 @@ import argparse
 import sqlite3
 import sys
 import os
+import re
+
 from birthday_show import birthday_show
 
 
@@ -10,7 +12,25 @@ CAPTCHA_LENGTH = 3
 
 
 def constrain_str(s: str):
-    return s
+    p = s.split('=')
+    if len(p) != 2:
+        raise argparse.ArgumentTypeError('Constrains should be in "key=value" format')
+
+    if p[0] in ('year', 'age', 'month', 'day', 'next'):
+        try:
+            p[1] = int(p[1])
+            if p[0] in ('age', 'month', 'day') and p[1] <= 0:
+                raise argparse.ArgumentTypeError('Constrain {} error: value should larger than zero'.format(p[0]))
+        except ValueError:
+            raise argparse.ArgumentTypeError('Constrain {} error: value should be an integer'.format(p[0]))
+
+    elif p[0] in ('name',):
+        pass
+
+    else:
+        raise argparse.ArgumentTypeError('Unknown constrain: {}'.format(p[0]))
+
+    return p
 
 
 def main():
@@ -25,7 +45,9 @@ def main():
         help='show records',
         description='Show records with filtering constrains.',
         add_help=False)
-    parser_show.add_argument('constrain', type=str, nargs='*', help='available constrains: year, age, month, day, name, next, all')
+    parser_show.add_argument('constrains',
+        type=constrain_str,
+        nargs='*', help='available constrains: year, age, month, day, name, next')
     parser_show.set_defaults(func=birthday_show)
 
     try:
