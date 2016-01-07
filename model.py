@@ -90,25 +90,36 @@ class Birthday:
                         continue
 
                     elif today.day >= record.day:
-                        yield record
-                        continue
+                        pass
 
                 elif today.year - record.year == constrains['age'] + 1:
                     if today.month > record.month:
                         continue
 
                     elif today.month < record.month:
-                        yield record
-                        continue
+                        pass
 
                     elif today.day >= record.day:
                         continue
 
                     elif today.day < record.day:
-                        yield record
-                        continue
+                        pass
 
-                continue
+                else:
+                    continue
+
+            if 'next' in constrains:
+                d1 = (datetime.date(today.year, record.month, record.day) - today).days
+                d2 = (datetime.date(today.year + 1, record.month, record.day) - today).days
+
+                if d1 > 0 and d1 <= constrains['next']:
+                    pass
+
+                elif d2 > 0 and d2 <= constrains['next']:
+                    pass
+
+                else:
+                    continue
 
             yield record
 
