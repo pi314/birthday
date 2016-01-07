@@ -1,27 +1,24 @@
 ============================================
 Birthday - Manage birthdays of your friends.
 ============================================
-
 Facebook notifies you when today is some your friends' birthday, that's great, but it won't show "tomorrow" or "7 days later" birthdays.
 
 Some people don't use Facebook, or they just hide their birthday.
 
-I want a command line tool, I can add it into my ``.login``, when I open a terminal, it shows birthdays of my friends upcoming in three days.
+I want a command line tool, so that when I open a terminal, it shows birthdays of my friends upcoming in three days.
 
 Usage
------
-
+------
 ::
 
-  birthday command ...
+  birthday subcommand arguments ...
 
 Available commands:
 
 * help
-* add (update)
+* add
+* update
 * show
-* ignore
-* follow
 * delete
 * rename
 * examples
@@ -38,15 +35,6 @@ Examples: ::
   $ birthday show
   1991/11/02 Dear-friend
 
-  # I had a fight with Dear-friend, don't want to see he/she
-  $ birthday ignore Dear-friend
-  $ birthday show
-
-  # We forgive each other
-  $ birthday follow Dear-friend
-  $ birthday show
-  1991/11/02 Dear-friend
-
   # (add many many friends)
 
   # What's the birthday of Dear-friend?
@@ -57,4 +45,3 @@ Examples: ::
   $ birthday examples
 
 All records are stored into ``~/.birthday.sqlite``.
-
