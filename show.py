@@ -9,7 +9,7 @@ def command(args):
     for r in Birthday.all():
         print(r)
 
-    print(constrains)
+    print('constrains:', constrains)
     Birthday.disconnect()
 
 

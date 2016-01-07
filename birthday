@@ -9,9 +9,6 @@ import show
 import add
 
 
-CAPTCHA_LENGTH = 3
-
-
 def main():
     top_parser = argparse.ArgumentParser(
         description='Manage birthdays of your friends.',
