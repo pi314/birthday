@@ -26,8 +26,23 @@ def constrain_str(s: str):
             p[1] = int(p[1])
             if p[0] in ('age', 'month', 'day') and p[1] <= 0:
                 raise argparse.ArgumentTypeError('Constrain {} error: value should larger than zero.'.format(p[0]))
+
         except ValueError:
-            raise argparse.ArgumentTypeError('Constrain {} error: value should be an integer.'.format(p[0]))
+            month_name_list = [
+                'January', 'February', 'March',
+                'April', 'May', 'June',
+                'July', 'August', 'September',
+                'October', 'November', 'December',
+                'Jan', 'Feb', 'Mar',
+                'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep',
+                'Oct', 'Nov', 'Dec',
+                ]
+            if p[0] == 'month' and p[1] in month_name_list:
+                p[1] = (month_name_list.index(p[1]) % 12) + 1
+
+            else:
+                raise argparse.ArgumentTypeError('Constrain {} error: value should be an integer.'.format(p[0]))
 
     elif p[0] in ('name',):
         pass
