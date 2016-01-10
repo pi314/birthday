@@ -2,7 +2,7 @@ import re
 import argparse
 import datetime
 
-from model import Birthday
+from .model import Birthday
 
 
 def command(args):

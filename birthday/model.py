@@ -2,7 +2,7 @@ import sqlite3
 import os
 import datetime
 
-from utils import captcha
+from .utils import captcha
 
 
 HOME_DIR = os.path.expanduser("~")

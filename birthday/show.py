@@ -1,6 +1,6 @@
 import argparse
 
-from model import Birthday
+from .model import Birthday
 
 
 def command(args):

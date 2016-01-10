@@ -5,8 +5,11 @@ import sys
 import os
 import re
 
-import show
-import add
+from . import show
+from . import add
+
+
+__version__ = '0.0.1'
 
 
 def help_(args):
