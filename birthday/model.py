@@ -112,10 +112,10 @@ class Birthday:
                 d1 = (datetime.date(today.year, record.month, record.day) - today).days
                 d2 = (datetime.date(today.year + 1, record.month, record.day) - today).days
 
-                if d1 > 0 and d1 <= constrains['next']:
+                if d1 >= 0 and d1 <= constrains['next']:
                     pass
 
-                elif d2 > 0 and d2 <= constrains['next']:
+                elif d2 >= 0 and d2 <= constrains['next']:
                     pass
 
                 else:
