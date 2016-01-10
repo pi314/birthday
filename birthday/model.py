@@ -141,16 +141,24 @@ class Birthday:
     def write(self):
         if self.exists():
             # record with same name exists
-            print('Record name [{}] exists.'.format(self.name))
             self.cursor.execute('''SELECT * FROM {TABLE_NAME} WHERE name='{name}'
                 '''.format(name=self.name, TABLE_NAME=TABLE_NAME))
 
             old = self.cursor.fetchone()
             old = Birthday(old[3], old[:3])
 
+            new = old + self
+
             if self != old:
-                print('Override? [{}] -> [{}]'.format(self - old, old - self))
+                print('Record name [{}] exists.'.format(self.name))
+                print('{}? {}'.format(
+                    'Merge' if old <= new else 'Override',
+                    old.diff(self)
+                ))
+                self = new
                 self.override()
+            else:
+                print('Record [{}] not changed.'.format(self.name))
 
             return
 
@@ -195,39 +203,72 @@ class Birthday:
             new_record=self,
             DATABASE_FILE=DATABASE_FILE_PATH,))
 
-    def __sub__(self, another):
-        return BirthdayDiff(self, another)
+    def diff(self, another):
+        return '[{}/{}/{}] -> [{}/{}/{}]'.format(
+            self.diff_a(4, self.year, another.year),
+            self.diff_a(2, self.month, another.month),
+            self.diff_a(2, self.day, another.day),
+            self.diff_b(4, self.year, another.year),
+            self.diff_b(2, self.month, another.month),
+            self.diff_b(2, self.day, another.day),
+        )
+
+    def diff_a(self, width, va, vb):
+        if va == 0 and vb != 0:
+            c1, c2 = ('\033[1;32m', '\033[m')
+        elif va == 0 or vb == 0 or va == vb:
+            c1, c2 = ('', '')
+        else:
+            c1, c2 = ('\033[1;33m', '\033[m')
+
+        return '{c1}{value:{fill}>{width}}{c2}'.format(
+            c1=c1, c2=c2,
+            value=va if va else '-',
+            fill='0' if va else '-',
+            width=width,
+        )
+
+    def diff_b(self, width, va, vb):
+        if va == 0 and vb != 0:
+            c1, c2, v = ('\033[1;32m', '\033[m', vb)
+        elif va == 0 or vb == 0 or va == vb:
+            c1, c2, v = ('', '', va)
+        else:
+            c1, c2, v = ('\033[1;33m', '\033[m', vb)
+
+        return '{c1}{value:{fill}>{width}}{c2}'.format(
+            c1=c1, c2=c2,
+            value=v if v else '-',
+            fill='0' if v else '-',
+            width=width,
+        )
+
+    def __add__(self, another):
+        ret = Birthday(self.name, [self.year, self.month, self.day])
+        if self.name != another.name:
+            raise ValueError('Cannot add two records with different name.')
+
+        if another.year != 0:
+            ret.year = another.year
+
+        if another.month != 0:
+            ret.month = another.month
+
+        if another.day != 0:
+            ret.day = another.day
+
+        return ret
+
+    def __le__(self, another):
+        if self.name != another.name:
+            raise ValueError('Cannot compare two records with different name.')
+
+        return (self.year == 0 or self.year == another.year) and\
+            (self.month == 0 or self.month == another.month) and\
+            (self.day == 0 or self.day == another.day)
 
     def __eq__(self, another):
         return (self.name == another.name and
             self.year == another.year and
             self.month == another.month and
             self.day == another.day)
-
-
-class BirthdayDiff:
-    def __init__(self, a, b):
-        self.a = [a.year, a.month, a.day]
-        self.b = [b.year, b.month, b.day]
-
-    def __str__(self):
-        return '{}/{}/{}'.format(
-            self.color(4, 0),
-            self.color(2, 1),
-            self.color(2, 2),
-        )
-
-    def color(self, width, index):
-        if self.a[index] == self.b[index]:
-            c1 = ''
-            c2 = ''
-        else:
-            c1 = '\033[1;33m'
-            c2 = '\033[m'
-
-        return '{c1}{value:{fill}>{width}}{c2}'.format(
-            c1=c1, c2=c2,
-            value=self.b[index] if self.b[index] else '-',
-            fill='0' if self.b[index] else '-',
-            width=width,
-        )
