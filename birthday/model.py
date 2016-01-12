@@ -123,7 +123,7 @@ class Birthday:
 
             yield record
 
-    def __init__(self, name, date):
+    def __init__(self, name, date=[0, 0, 0]):
         self.year = date[0]
         self.month = date[1]
         self.day = date[2]
@@ -250,3 +250,14 @@ class Birthday:
             self.year == another.year and
             self.month == another.month and
             self.day == another.day)
+
+    @connection_required
+    @captcha
+    def delete(self):
+        if not self.exists(): return
+
+        self.cursor.execute('''DELETE FROM {TABLE_NAME} WHERE name="{name}"'''.format(
+            TABLE_NAME=TABLE_NAME,
+            name=self.name
+        ))
+        self.connection.commit()

@@ -7,6 +7,7 @@ import re
 
 from . import show
 from . import add
+from . import delete
 
 
 __version__ = '0.0.1'
@@ -62,6 +63,12 @@ def main():
     parser_add.add_argument('date', type=add.date_str,
         help='the birthday of your friend, in xxxx/xx/xx format')
     parser_add.set_defaults(func=add.command)
+
+    parser_delete = subparsers.add_parser('delete',
+        help='Remove record by name',
+        add_help=False)
+    parser_delete.add_argument('name', type=str, help='the name of record')
+    parser_delete.set_defaults(func=delete.command)
 
     try:
         args = top_parser.parse_args()
