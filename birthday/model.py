@@ -140,27 +140,7 @@ class Birthday:
     @connection_required
     def write(self):
         if self.exists():
-            # record with same name exists
-            self.cursor.execute('''SELECT * FROM {TABLE_NAME} WHERE name='{name}'
-                '''.format(name=self.name, TABLE_NAME=TABLE_NAME))
-
-            old = self.cursor.fetchone()
-            old = Birthday(old[3], old[:3])
-
-            new = old + self
-
-            if self != old:
-                print('Record name [{}] exists.'.format(self.name))
-                print('{}? {}'.format(
-                    'Merge' if old <= new else 'Override',
-                    old.diff(self)
-                ))
-                self = new
-                self.override()
-            else:
-                print('Record [{}] not changed.'.format(self.name))
-
-            return
+            return False
 
         self.cursor.execute('''INSERT INTO {TABLE_NAME}
             (name, year, month, day)
@@ -172,9 +152,7 @@ class Birthday:
             TABLE_NAME=TABLE_NAME)
         )
         self.connection.commit()
-        print('Record [{new_record}] had been added into database.'.format(
-            new_record=self,
-            DATABASE_FILE=DATABASE_FILE_PATH,))
+        return True
 
     @connection_required
     def exists(self):

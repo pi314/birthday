@@ -8,7 +8,24 @@ from .model import Birthday
 def command(args):
     Birthday.connect()
     new_birthday = Birthday(name=args.name, date=args.date)
-    new_birthday.write()
+    if not new_birthday.exists():
+        new_birthday.write()
+        print('Record [{new_record}] had been added into database.'.format(
+            new_record=new_birthday)
+        )
+    else:
+        old = next(Birthday.select({'name': args.name}))
+        new = old + new_birthday
+        if new != old:
+            print('Record name [{}] exists.'.format(old.name))
+            print('{}? {}'.format(
+                'Merge' if old <= new else 'Override',
+                old.diff(new)
+            ))
+            new.override()
+        else:
+            print('Record [{}] not changed.'.format(old.name))
+
     Birthday.disconnect()
 
 
