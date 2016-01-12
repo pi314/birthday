@@ -20,7 +20,7 @@ Available commands:
 * show
 * delete
 * rename
-* examples
+* next
 
 Examples: ::
 
@@ -40,7 +40,10 @@ Examples: ::
   $ birthday show name=friend year=1991 month=11
   1991/11/02 Dear-friend
 
-  # how to use?
-  $ birthday examples
+  # I had a fight with Dear-friend, don't want to see he/she anymore
+  $ birthday delete Dear-friend
+
+  # Show all birthdays coming in 3 days
+  $ birthday show next=3
 
 All records are stored into ``~/.birthday.sqlite``.
