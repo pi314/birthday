@@ -54,6 +54,9 @@ def main():
         type=show.constrain_str,
         nargs='*', help='''In format "constrain=value".
             Available constrains: year, age, month, day, name, next''')
+    parser_show.add_argument('-c', '--color', dest='highlight_today',
+        type=show.color_str,
+        help='Highlight today')
     parser_show.set_defaults(func=show.command)
 
     # birthday add

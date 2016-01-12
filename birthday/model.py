@@ -2,6 +2,8 @@ import sqlite3
 import os
 import datetime
 
+from . import utils
+
 
 HOME_DIR = os.path.expanduser("~")
 DATABASE_FILE_NAME = '.birthday.sqlite'
@@ -21,6 +23,8 @@ def connection_required(func):
 class Birthday:
     connection = None
     cursor = None
+    today_color = None
+    today = datetime.date.today()
 
     @classmethod
     def connect(cls):
@@ -56,8 +60,7 @@ class Birthday:
     @classmethod
     @connection_required
     def select(cls, constrains={}):
-        today = datetime.date.today()
-
+        today = cls.today
         for record in cls.cursor.execute('SELECT * FROM {TABLE_NAME} ORDER BY month, day, year, name;'.format(TABLE_NAME=TABLE_NAME)):
             record = Birthday(record[3], record[:3])
             if 'year' in constrains and record.year != constrains['year']:
@@ -128,12 +131,23 @@ class Birthday:
         self.name = name
 
     def __str__(self):
-        return '{:>04}/{:>02}/{:>02} {}'.format(
-            self.year if self.year else '----',
-            self.month if self.month else '--',
-            self.day if self.day else '--',
-            self.name
-        )
+        if self.today_color is not None and (self.month, self.day) == (self.today.month, self.today.day):
+            return '{:>04}/{}{:>02}/{:>02}{} {}'.format(
+                self.year if self.year else '----',
+                utils.color_code[self.today_color],
+                self.month if self.month else '--',
+                self.day if self.day else '--',
+                '\033[m',
+                self.name
+            )
+
+        else:
+            return '{:>04}/{:>02}/{:>02} {}'.format(
+                self.year if self.year else '----',
+                self.month if self.month else '--',
+                self.day if self.day else '--',
+                self.name
+            )
 
     @connection_required
     def write(self):

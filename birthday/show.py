@@ -5,6 +5,7 @@ from .model import Birthday
 
 def command(args):
     Birthday.connect()
+    Birthday.today_color = args.highlight_today
     constrains = dict(args.constrains)
 
     if 'age' in constrains and 'year' in constrains:
@@ -51,3 +52,14 @@ def constrain_str(s: str):
         raise argparse.ArgumentTypeError('Unknown constrain: {}.'.format(p[0]))
 
     return p
+
+
+def color_str(s: str):
+    s = s.lower()
+    if s in ('black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'):
+        return s.lower()
+
+    if s in ('lime', 'purple'):
+        return s.lower()
+
+    raise argparse.ArgumentTypeError('Unknown color: {}.'.format(s))
