@@ -2,8 +2,6 @@ import sqlite3
 import os
 import datetime
 
-from .utils import captcha
-
 
 HOME_DIR = os.path.expanduser("~")
 DATABASE_FILE_NAME = '.birthday.sqlite'
@@ -162,7 +160,6 @@ class Birthday:
         return self.cursor.fetchone() is not None
 
     @connection_required
-    @captcha
     def override(self):
         if not self.exists(): return
 
@@ -252,7 +249,6 @@ class Birthday:
             self.day == another.day)
 
     @connection_required
-    @captcha
     def delete(self):
         if not self.exists(): return
 

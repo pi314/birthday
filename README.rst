@@ -17,7 +17,6 @@ Available commands:
 
 * help
 * add
-* update
 * show
 * delete
 * rename
@@ -31,7 +30,7 @@ Examples: ::
   1991/--/-- Dear-friend
 
   # Hey, he/she just tell me his/her birthday date!
-  $ birthday update Dear-friend xxxx/11/02
+  $ birthday add Dear-friend xxxx/11/02
   $ birthday show
   1991/11/02 Dear-friend
 

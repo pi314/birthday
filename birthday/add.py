@@ -3,6 +3,7 @@ import argparse
 import datetime
 
 from .model import Birthday
+from .utils import captcha
 
 
 def command(args):
@@ -22,6 +23,7 @@ def command(args):
                 'Merge' if old <= new else 'Override',
                 old.diff(new)
             ))
+            captcha()
             new.override()
         else:
             print('Record [{}] not changed.'.format(old.name))

@@ -8,6 +8,7 @@ import re
 from . import show
 from . import add
 from . import delete
+from . import rename
 
 
 __version__ = '0.0.1'
@@ -69,6 +70,13 @@ def main():
         add_help=False)
     parser_delete.add_argument('name', type=str, help='the name of record')
     parser_delete.set_defaults(func=delete.command)
+
+    parser_rename = subparsers.add_parser('rename',
+        help='Rename record by name',
+        add_help=False)
+    parser_rename.add_argument('old_name', type=str, help='the old name of your friend')
+    parser_rename.add_argument('new_name', type=str, help='the new name of your friend')
+    parser_rename.set_defaults(func=rename.command)
 
     try:
         args = top_parser.parse_args()
