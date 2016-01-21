@@ -11,9 +11,6 @@ from . import delete
 from . import rename
 
 
-__version__ = '0.0.1'
-
-
 def help_(args):
     if args.subcommand is None:
         args.top_parser.print_help()
