@@ -9,6 +9,7 @@ from . import show
 from . import add
 from . import delete
 from . import rename
+from . import dump
 
 
 def help_(args):
@@ -65,18 +66,25 @@ def main():
         help='the birthday of your friend, in xxxx/xx/xx format')
     parser_add.set_defaults(func=add.command)
 
+    # birthday delete
     parser_delete = subparsers.add_parser('delete',
         help='Remove record by name',
         add_help=False)
     parser_delete.add_argument('name', type=str, help='the name of record')
     parser_delete.set_defaults(func=delete.command)
 
+    # birthday rename
     parser_rename = subparsers.add_parser('rename',
         help='Rename record by name',
         add_help=False)
     parser_rename.add_argument('old_name', type=str, help='the old name of your friend')
     parser_rename.add_argument('new_name', type=str, help='the new name of your friend')
     parser_rename.set_defaults(func=rename.command)
+
+    # birthday dump  ### for shell completion ###
+    parser_completion = subparsers.add_parser('dump', add_help=False)
+    parser_completion.add_argument('info', type=str, help='{names}')
+    parser_completion.set_defaults(func=dump.command)
 
     try:
         args = top_parser.parse_args()

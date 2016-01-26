@@ -1,0 +1,41 @@
+#compdef birthday
+
+_birthday () {
+    _arguments '1: :->subcmd' \
+        '*: :->subcmd_args'
+
+    case $state in
+    subcmd)
+        _birthday_commands
+        ;;
+    subcmd_args)
+        case $words[2] in
+        help)
+            _birthday_help
+            ;;
+        delete)
+            _birthday_delete
+            ;;
+        esac
+    esac
+}
+
+_birthday_commands () {
+    _arguments '1: :((
+            help\:"Usage of subcommands"
+            show\:"Show records with filtering constrains"
+            add\:"Add new record with partial informations"
+            delete\:"Remove record by name"
+            rename\:"Rename record by name"
+        ))'
+}
+
+_birthday_help () {
+    _arguments '2: :((help show add delete rename))'
+}
+
+_birthday_delete () {
+    _arguments '*: :($(birthday dump names))'
+}
+
+_birthday "$@"
