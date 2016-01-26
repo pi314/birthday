@@ -39,7 +39,27 @@ _birthday_help () {
 
 _birthday_add () {
     local names=(${(f)"$(birthday dump names)"})
-    _arguments '2: :((${names}))'
+    _arguments '2: :((${names}))' \
+        '3: :->comp_date'
+
+    if [ "$state" = "comp_date" ]; then
+        case "${PREFIX}" in
+            */*/*|*/*/)
+                for d in xx $(seq -w 31); do
+                    compadd -S ' ' -p "${PREFIX%/*}/" "${d}"
+                done
+                ;;
+            */*|*/)
+                for m in xx $(seq -w 12); do
+                    compadd -S '/' -p "${PREFIX%/*}/" "${m}"
+                done
+                compadd -S ' '  -p "${PREFIX%/*}/" "today"
+                ;;
+            *)
+                compadd -S '/' 'xxxx' $(birthday dump years)
+                ;;
+        esac
+    fi
 }
 
 _birthday_delete () {
