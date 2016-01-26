@@ -13,6 +13,9 @@ _birthday () {
         help)
             _birthday_help
             ;;
+        add)
+            _birthday_add
+            ;;
         delete)
             _birthday_delete
             ;;
@@ -34,8 +37,13 @@ _birthday_help () {
     _arguments '2: :((help show add delete rename))'
 }
 
+_birthday_add () {
+    local names=(${(f)"$(birthday dump names)"})
+    _arguments '2: :((${names}))'
+}
+
 _birthday_delete () {
-    _arguments '*: :($(birthday dump names))'
+    _arguments '2: :($(birthday dump names))'
 }
 
 _birthday "$@"
