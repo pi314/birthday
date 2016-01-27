@@ -5,21 +5,24 @@ _birthday () {
         '*: :->subcmd_args'
 
     case $state in
-    subcmd)
-        _birthday_commands
-        ;;
-    subcmd_args)
-        case $words[2] in
-        help)
-            _birthday_help
+        subcmd)
+            _birthday_commands
             ;;
-        add)
-            _birthday_add
-            ;;
-        delete)
-            _birthday_delete
-            ;;
-        esac
+        subcmd_args)
+            case $words[2] in
+                help)
+                    _birthday_help
+                    ;;
+                show)
+                    _birthday_show
+                    ;;
+                add)
+                    _birthday_add
+                    ;;
+                delete)
+                    _birthday_delete
+                    ;;
+            esac
     esac
 }
 
@@ -35,6 +38,12 @@ _birthday_commands () {
 
 _birthday_help () {
     _arguments '2: :((help show add delete rename))'
+}
+
+_birthday_show () {
+    _arguments\
+        {-c,--color}'[The highlighting color of today]: :(($(birthday comp colors)))'\
+        '*: :{compadd -S "=" year age month day name next}'
 }
 
 _birthday_add () {

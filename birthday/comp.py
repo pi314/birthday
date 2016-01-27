@@ -1,3 +1,4 @@
+from .utils import color_code
 from .model import Birthday
 
 
@@ -27,5 +28,9 @@ def command(args):
             print('{:>02}'.format(target.day if target.day else 'xx'))
         except StopIteration:
             print('xx')
+
+    elif args.info[0] == 'colors':
+        for color in color_code:
+            print(color)
 
     Birthday.disconnect()
