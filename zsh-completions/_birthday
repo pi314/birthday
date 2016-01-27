@@ -38,32 +38,31 @@ _birthday_help () {
 }
 
 _birthday_add () {
-    local names=(${(f)"$(birthday dump names)"})
+    local names=(${(f)"$(birthday comp names)"})
     _arguments '2: :((${names}))' \
         '3: :->comp_date'
+
+    local words
+    words=("${(z)BUFFER}")
 
     if [ "$state" = "comp_date" ]; then
         case "${PREFIX}" in
             */*/*|*/*/)
-                for d in xx $(seq -w 31); do
-                    compadd -S ' ' -p "${PREFIX%/*}/" "${d}"
-                done
+                compadd -S ' ' -p "${PREFIX%/*}/" $(birthday comp day-of $words[3])
                 ;;
             */*|*/)
-                for m in xx $(seq -w 12); do
-                    compadd -S '/' -p "${PREFIX%/*}/" "${m}"
-                done
-                compadd -S ' '  -p "${PREFIX%/*}/" "today"
+                compadd -S '/' -p "${PREFIX%/*}/" $(birthday comp month-of $words[3])
+                compadd -S ' ' -p "${PREFIX%/*}/" "today"
                 ;;
             *)
-                compadd -S '/' 'xxxx' $(birthday dump years)
+                compadd -S '/' $(birthday comp year-of $words[3])
                 ;;
         esac
     fi
 }
 
 _birthday_delete () {
-    _arguments '2: :($(birthday dump names))'
+    _arguments '2: :($(birthday comp names))'
 }
 
 _birthday "$@"

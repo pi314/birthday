@@ -9,7 +9,7 @@ from . import show
 from . import add
 from . import delete
 from . import rename
-from . import dump
+from . import comp
 
 
 def help_(args):
@@ -81,10 +81,10 @@ def main():
     parser_rename.add_argument('new_name', type=str, help='the new name of your friend')
     parser_rename.set_defaults(func=rename.command)
 
-    # birthday dump  ### for shell completion ###
-    parser_completion = subparsers.add_parser('dump', add_help=False)
-    parser_completion.add_argument('info', type=str, help='{names}')
-    parser_completion.set_defaults(func=dump.command)
+    # birthday comp  ### for shell completion ###
+    parser_completion = subparsers.add_parser('comp', add_help=False)
+    parser_completion.add_argument('info', type=str, nargs='+', help='{names}')
+    parser_completion.set_defaults(func=comp.command)
 
     try:
         args = top_parser.parse_args()
