@@ -51,20 +51,20 @@ _birthday_add () {
     _arguments '2: :((${names}))' \
         '3: :->comp_date'
 
-    local words
-    words=("${(z)BUFFER}")
+    local target
+    target=${(Q)${${(z)BUFFER}[3]}}
 
     if [ "$state" = "comp_date" ]; then
         case "${PREFIX}" in
             */*/*|*/*/)
-                compadd -S ' ' -p "${PREFIX%/*}/" $(birthday comp day-of $words[3])
+                compadd -S ' ' -p "${PREFIX%/*}/" $(birthday comp day-of $target)
                 ;;
             */*|*/)
-                compadd -S '/' -p "${PREFIX%/*}/" $(birthday comp month-of $words[3])
+                compadd -S '/' -p "${PREFIX%/*}/" $(birthday comp month-of $target)
                 compadd -S ' ' -p "${PREFIX%/*}/" "today"
                 ;;
             *)
-                compadd -S '/' $(birthday comp year-of $words[3])
+                compadd -S '/' $(birthday comp year-of $target)
                 ;;
         esac
     fi
