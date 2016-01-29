@@ -22,6 +22,9 @@ _birthday () {
                 delete)
                     _birthday_delete
                     ;;
+                rename)
+                    _birthday_rename
+                    ;;
             esac
     esac
 }
@@ -47,8 +50,7 @@ _birthday_show () {
 }
 
 _birthday_add () {
-    local names=(${(f)"$(birthday comp names)"})
-    _arguments '2: :((${names}))' \
+    _arguments '2: :((${(f)"$(birthday comp names)"}))' \
         '3: :->comp_date'
 
     local target
@@ -71,7 +73,11 @@ _birthday_add () {
 }
 
 _birthday_delete () {
-    _arguments '2: :($(birthday comp names))'
+    _arguments '2: :((${(f)"$(birthday comp names)"}))'
+}
+
+_birthday_rename () {
+    _arguments '2: :((${(f)"$(birthday comp names)"}))'
 }
 
 _birthday "$@"
