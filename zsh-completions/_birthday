@@ -1,0 +1,83 @@
+#compdef birthday
+
+_birthday () {
+    _arguments '1: :->subcmd' \
+        '*: :->subcmd_args'
+
+    case $state in
+        subcmd)
+            _birthday_commands
+            ;;
+        subcmd_args)
+            case $words[2] in
+                help)
+                    _birthday_help
+                    ;;
+                show)
+                    _birthday_show
+                    ;;
+                add)
+                    _birthday_add
+                    ;;
+                delete)
+                    _birthday_delete
+                    ;;
+                rename)
+                    _birthday_rename
+                    ;;
+            esac
+    esac
+}
+
+_birthday_commands () {
+    _arguments '1: :((
+            help\:"Usage of subcommands"
+            show\:"Show records with filtering constrains"
+            add\:"Add new record with partial informations"
+            delete\:"Remove record by name"
+            rename\:"Rename record by name"
+        ))'
+}
+
+_birthday_help () {
+    _arguments '2: :((help show add delete rename))'
+}
+
+_birthday_show () {
+    _arguments\
+        {-c,--color}'[The highlighting color of today]: :(($(birthday comp colors)))'\
+        '*: :{compadd -S "=" year age month day name next}'
+}
+
+_birthday_add () {
+    _arguments '2: :((${(f)"$(birthday comp names)"}))' \
+        '3: :->comp_date'
+
+    local target
+    target=${(Q)${${(z)BUFFER}[3]}}
+
+    if [ "$state" = "comp_date" ]; then
+        case "${PREFIX}" in
+            */*/*|*/*/)
+                compadd -S ' ' -p "${PREFIX%/*}/" $(birthday comp day-of $target)
+                ;;
+            */*|*/)
+                compadd -S '/' -p "${PREFIX%/*}/" $(birthday comp month-of $target)
+                compadd -S ' ' -p "${PREFIX%/*}/" "today"
+                ;;
+            *)
+                compadd -S '/' $(birthday comp year-of $target)
+                ;;
+        esac
+    fi
+}
+
+_birthday_delete () {
+    _arguments '2: :((${(f)"$(birthday comp names)"}))'
+}
+
+_birthday_rename () {
+    _arguments '2: :((${(f)"$(birthday comp names)"}))'
+}
+
+_birthday "$@"
