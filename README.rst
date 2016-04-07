@@ -24,10 +24,13 @@ Available commands:
 
 Examples: ::
 
-  # I only know his/her age, but no date
+  # I only know his/her born year, but no date
   $ birthday add Dear-friend 1991/xx/xx
   $ birthday show
   1991/--/-- Dear-friend
+
+  # ...or more convenient, add record by his/her age
+  $ birthday add Dear-friend a21/xx/xx
 
   # Hey, he/she just tell me his/her birthday date!
   $ birthday add Dear-friend xxxx/11/02

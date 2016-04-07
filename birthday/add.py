@@ -33,22 +33,29 @@ def command(args):
 
 def raise_format_error():
     raise argparse.ArgumentTypeError('Date should be in format:\n'
-        '    <date>:  <year>/<month>/<day> | <year>/today | today\n'
-        '    <year>:  xxxx | \d\d\d\d\n'
+        '    <date>:  <year>/<month>/<day> | <year>/today\n'
+        '    <year>:  xxxx | \d\d\d\d | [aA]\d{1,4}\n'
         '    <month>: xx | \d\d\n'
         '    <day>:   xx | \d\d')
 
 
 def date_str(s: str):
-    m = re.match(r'^(?:(\d{4}|xxxx)/)?(?:(\d\d|xx)/(\d\d|xx)|(today))$', s)
+    print(s)
+    m = re.match(r'^(\d{4}|xxxx|[aA]\d{1,4})/(?:(\d\d|xx)/(\d\d|xx)|(today))$', s)
     if not m:
         raise_format_error()
 
     try:
-        yy = 0 if m.group(1) == 'xxxx' else int(m.group(1))
+        today = datetime.date.today()
 
-        if m.group(4):
-            today = datetime.date.today()
+        if m.group(1) == 'xxxx':    # xxxx/../..
+            yy = 0
+        elif m.group(1).lower().startswith('a'):    # age/../..
+            yy = today.year - int(m.group(1)[1::])
+        else:   # year/../..
+            yy = int(m.group(1))
+
+        if m.group(4):  # ..../today
             mm = today.month
             dd = today.day
 
@@ -61,6 +68,5 @@ def date_str(s: str):
 
     if (yy, mm, dd) == (0, 0, 0):
         raise argparse.ArgumentTypeError('Date cannot be totally unknown.')
-
 
     return [yy, mm, dd]
