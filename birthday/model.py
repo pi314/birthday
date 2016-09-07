@@ -110,8 +110,11 @@ class Birthday:
                     continue
 
             if 'next' in constrains:
-                d1 = (datetime.date(today.year, record.month, record.day) - today).days
-                d2 = (datetime.date(today.year + 1, record.month, record.day) - today).days
+                try:
+                    d1 = (datetime.date(today.year, record.month, record.day) - today).days
+                    d2 = (datetime.date(today.year + 1, record.month, record.day) - today).days
+                except ValueError:
+                    continue
 
                 if d1 >= 0 and d1 <= constrains['next']:
                     pass
