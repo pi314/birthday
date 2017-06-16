@@ -26,5 +26,5 @@ setup(
     ],
     packages=find_packages(exclude=['scripts']),
     scripts=['scripts/birthday'],
-    data_files=[('zsh-completions', ['_birthday'])],
+    data_files=[('zsh-completions', ['zsh-completions/_birthday'])],
 )
